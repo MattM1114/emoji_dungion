@@ -1,5 +1,12 @@
 package com.emoji_dungion;
-import java.awt.*;
+
+
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -15,7 +22,15 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.util.Random;
-import javax.swing.*;
+
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JProgressBar;
+import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 
 
 /**
@@ -110,7 +125,34 @@ public class emoji_Dungion extends JFrame implements KeyListener, ActionListener
     }
 
     // PROCEDURAL LEVEL GENERATION
+    // Keeps generating until the wizard can actually walk from the start to the campsite
     private void generateProceduralForest() {
+        do {
+            fillRandomForest();
+        } while (!exitReachable());
+    }
+
+    // True if the campsite can be reached from the start. Trees block the way;
+    // apples and wolves can be walked over, so they don't block it.
+    private boolean exitReachable() {
+        boolean[][] seen = new boolean[ROWS][COLS];
+        flood(playerY, playerX, seen);
+        return seen[ROWS - 2][COLS - 2];
+    }
+
+    // Flood fill: marks every tile reachable from (r, c) without crossing a tree
+    private void flood(int r, int c, boolean[][] seen) {
+        if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return; // off the map
+        if (seen[r][c] || map[r][c] == 1) return;             // already visited or a tree
+        seen[r][c] = true;
+        flood(r - 1, c, seen);
+        flood(r + 1, c, seen);
+        flood(r, c - 1, seen);
+        flood(r, c + 1, seen);
+    }
+
+    // Fills the map with one random layout (may or may not be winnable)
+    private void fillRandomForest() {
         for (int r = 0; r < ROWS; r++) {
             for (int c = 0; c < COLS; c++) {
                 if (r == 0 || r == ROWS - 1 || c == 0 || c == COLS - 1) {
